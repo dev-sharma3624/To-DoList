@@ -52,6 +52,9 @@ android {
 
 dependencies {
 
+    //viewmodel
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.2")
+
     //Room dependency for persistent data
     val room_version = "2.6.1"
     implementation("androidx.room:room-runtime:$room_version")

@@ -24,5 +24,5 @@ abstract class TaskDao {
     abstract suspend fun deleteTask(deletedWish: Task)
 
     @Query("select * from taskTable where id = :id")
-    abstract fun getTaskById(id: Int): Flow<Task>
+    abstract fun getTaskById(id: Long): Flow<Task>
 }
