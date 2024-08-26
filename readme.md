@@ -1,4 +1,10 @@
-![img.png](img.png = 50x100)
-![img_1.png](img_1.png)
-![img_2.png](img_2.png)
-![img_3.png](img_3.png)
+<p align="center">
+  <img src="img.png" alt="Image description" width="300" height="600"/>
+  <br>
+  <img src="img_1.png" alt="Image description" width="300" height="600"/>
+  <br>
+  <img src="img_2.png" alt="Image description" width="300" height="600"/>
+  <br>
+  <img src="img_3.png" alt="Image description" width="300" height="600"/>
+  <br>
+</p>
