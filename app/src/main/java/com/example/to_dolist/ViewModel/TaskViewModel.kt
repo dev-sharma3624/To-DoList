@@ -14,22 +14,17 @@ class TaskViewModel(
     private val taskRepository: TaskRepository = Graph.taskRepository
 ): ViewModel() {
 
-    val tag = "TEST"
-
     lateinit var getAllTasks: Flow<List<Task>>
 
     init {
-        Log.d(tag, "Enter TaskViewModel init bloc")
         viewModelScope.launch {
             getAllTasks = taskRepository.getAllTasks()
         }
     }
 
     fun addTask(newTask: Task){
-        Log.d(tag, "addTask in viewModel called")
         viewModelScope.launch(Dispatchers.IO) {
             taskRepository.addTask(newTask)
-            getAllTasks = taskRepository.getAllTasks()
         }
     }
 

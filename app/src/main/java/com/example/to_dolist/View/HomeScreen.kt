@@ -3,6 +3,7 @@ package com.example.to_dolist.View
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
@@ -12,19 +13,23 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ButtonElevation
 import androidx.compose.material3.Card
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxColors
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
@@ -39,9 +44,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -49,13 +51,9 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.lifecycle.viewmodel.viewModelFactory
-import com.example.to_dolist.Data.Graph
 import com.example.to_dolist.Data.Task
 import com.example.to_dolist.ViewModel.TaskViewModel
-import kotlin.concurrent.timerTask
 
 
 @Composable
@@ -63,16 +61,13 @@ fun HomeScreen(
     taskViewModel: TaskViewModel = viewModel()
 ){
 
-    val tag = "TEST"
-    Log.d(tag, "Entered Home Screen")
-
     val taskList = taskViewModel.getAllTasks.collectAsState(initial = listOf())
-    Log.d(tag, "taskList created")
+    var dialogControllerForAdd by remember{mutableStateOf(false)}
+    var dialogTextFieldForAdd by remember{mutableStateOf("")}
 
-    val dummyList = listOf(Task(101, taskStatement = "Complete Project"), Task(102, taskStatement = "Quickly"))
-
-    var dialogController by remember{mutableStateOf(false)}
-    var dialogTextField by remember{mutableStateOf("")}
+    var updateDialogController by remember{ mutableStateOf(false) }
+    var updateDialogTextField by remember{ mutableStateOf("") }
+    var updateTaskId by remember { mutableStateOf(0L) }
 
     Column(
         modifier = Modifier
@@ -84,8 +79,6 @@ fun HomeScreen(
             ),
         horizontalAlignment = Alignment.End
     ){
-
-        Log.d(tag, "Enter column scope")
 
         //spacer to avoid notch
         Spacer(modifier = Modifier.padding(20.dp))
@@ -116,23 +109,78 @@ fun HomeScreen(
             }*/
             
             items(taskList.value, key = {it.id}){
-                Task(task = it)
+                Task(task = it, taskViewModel = taskViewModel){
+                    taskStatement, taskId ->
+                    updateDialogController = true
+                    updateDialogTextField = taskStatement
+                    updateTaskId = taskId
+                }
             }
         }
 
         //add button
         FloatingActionButton(
             onClick = {
-                dialogController = true
+                dialogControllerForAdd = true
             },
             modifier = Modifier.padding(32.dp)
         ) {
             Icon(imageVector = Icons.Default.Add, contentDescription = null)
         }
+        
+        Spacer(modifier = Modifier.padding(30.dp))
 
-        if(dialogController){
+        if(updateDialogController){
             AlertDialog(
-                onDismissRequest = { dialogController = false },
+                onDismissRequest = {
+                    updateDialogController = false
+                },
+                confirmButton = {},
+                title = {
+                    Text(text = "Update Task")
+                },
+                text = {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        OutlinedTextField(
+                            value = updateDialogTextField,
+                            onValueChange = {
+                                updateDialogTextField = it
+                            }
+                        )
+
+                        Spacer(modifier = Modifier.padding(8.dp))
+
+                        Button(
+                            onClick = {
+                                updateDialogController = false
+                                taskViewModel.updateTask(Task(
+                                    id = updateTaskId,
+                                    isCompleted = false,
+                                    taskStatement = updateDialogTextField
+                                ))
+                            },
+                            colors = ButtonColors(
+                                containerColor = Color.Black,
+                                contentColor = Color.White,
+                                disabledContentColor = Color.DarkGray,
+                                disabledContainerColor = Color.White
+                            ),
+                            elevation = ButtonDefaults.elevatedButtonElevation(
+                                defaultElevation = 8.dp
+                            )
+                        ) {
+                            Text(text = "Update")
+                        }
+                    }
+                }
+            )
+        }
+
+        if(dialogControllerForAdd){
+            AlertDialog(
+                onDismissRequest = { dialogControllerForAdd = false },
                 confirmButton = {},
                 title = {
                     Text(text = "Add new task")
@@ -142,9 +190,9 @@ fun HomeScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         OutlinedTextField(
-                            value = dialogTextField,
+                            value = dialogTextFieldForAdd,
                             onValueChange = {
-                                dialogTextField = it
+                                dialogTextFieldForAdd = it
                             }
                         )
 
@@ -152,9 +200,9 @@ fun HomeScreen(
 
                         Button(
                             onClick = {
-                                dialogController = false
-                                taskViewModel.addTask(Task(taskStatement = dialogTextField.trim()))
-                                dialogTextField = ""
+                                dialogControllerForAdd = false
+                                taskViewModel.addTask(Task(taskStatement = dialogTextFieldForAdd.trim()))
+                                dialogTextFieldForAdd = ""
                             },
                             colors = ButtonColors(
                                 containerColor = Color.Black,
@@ -175,23 +223,33 @@ fun HomeScreen(
     }
 }
 
-@Composable
-fun Task(task: Task){
 
+@Composable
+fun Task(
+    task: Task,
+    taskViewModel: TaskViewModel,
+    onClick: (String, Long) -> Unit
+){
     Card(
-        modifier = Modifier.padding(8.dp)
+        modifier = Modifier
+            .padding(8.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(IntrinsicSize.Max)
         ) {
-            //Radio Button
-            RadioButton(
-                selected = task.isCompleted,
-                onClick = {
-                    task.isCompleted = !task.isCompleted
-                }
+            //Checkbox
+            Checkbox(
+                checked = task.isCompleted,
+                onCheckedChange = {
+                    taskViewModel.updateTask(task.copy(
+                        isCompleted = !task.isCompleted
+                    ))
+                },
+                colors = CheckboxDefaults.colors(
+                    checkedColor = Color.Black
+                )
             )
 
             //Vertical Divider
@@ -205,39 +263,41 @@ fun Task(task: Task){
 
             Spacer(modifier = Modifier.padding(8.dp))
 
-            //task statement
-            Text(
-                text = task.taskStatement,
+            Row(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(vertical = 12.dp),
-                fontSize = 16.sp,
-                textAlign = TextAlign.Justify,
-                textDecoration =
+                    .padding(horizontal = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                //task statement
+                Text(
+                    text = task.taskStatement,
+                    modifier = Modifier
+                        .wrapContentSize()
+                        .padding(vertical = 12.dp)
+                        .clickable {
+                            onClick(task.taskStatement, task.id)
+                        },
+                    fontSize = 16.sp,
+                    textAlign = TextAlign.Justify,
+                    textDecoration =
                     if (task.isCompleted){
                         TextDecoration.LineThrough
                     }
                     else{
                         TextDecoration.None
                     }
-            )
+                )
+
+                //delete button
+                IconButton(
+                    onClick = {
+                        taskViewModel.deleteTask(task)
+                    }
+                ) {
+                    Icon(imageVector = Icons.Default.Delete, contentDescription = null)
+                }
+            }
         }
     }
-}
-
-
-
-@Preview(showBackground = true)
-@Composable
-fun HomeScreenPreview(){
-    /*Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Cyan)
-            .padding(16.dp)
-    ) {
-        Task(task = Task(101, taskStatement = "Complete Project"))
-    }*/
-
-//    HomeScreen(taskViewModel = TaskViewModel())
 }

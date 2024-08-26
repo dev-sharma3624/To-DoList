@@ -14,6 +14,6 @@ data class Task(
     var isCompleted: Boolean = false,
 
     @ColumnInfo(name = "taskStatement")
-    val taskStatement: String = ""
+    var taskStatement: String = ""
 )
 

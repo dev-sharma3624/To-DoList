@@ -24,13 +24,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-
-        val tag = "TEST"
-
-
         setContent {
             ToDoListTheme {
-                Log.d(tag, "Inside Main Activity")
                 HomeScreen()
             }
         }
